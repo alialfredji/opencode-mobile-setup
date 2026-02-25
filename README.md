@@ -225,23 +225,101 @@ iPhone → Moshi/Blink → mosh to Mac → auto-attaches tmux → run opencode
 
 ---
 
+## Session Management
+
+tmux has three levels of organisation:
+
+```
+Session  (named container — survives disconnect and Mac reboots)
+  └── Window  (like a browser tab — switch with Ctrl+B 1/2/3)
+        └── Pane  (split view within a window)
+```
+
+### The default: one session, multiple windows
+
+The script auto-attaches you to a session called `main` on every connection. The cleanest way to organise work inside it is with **windows** — one per project or task:
+
+```bash
+Ctrl+B  C        # new window
+Ctrl+B  ,        # rename it (e.g. "opencode", "git", "logs")
+Ctrl+B  1/2/3    # switch to window by number
+Ctrl+B  W        # visual list of all windows — tap to jump (great on phone)
+Ctrl+B  &        # kill current window
+```
+
+### Multiple sessions (project isolation)
+
+Use separate sessions when you want completely independent environments — for example, two different codebases running OpenCode simultaneously:
+
+```bash
+tmux new -s projectA          # create a named session
+tmux new -s projectB
+tmux ls                        # list all running sessions
+tmux attach -t projectA        # attach to a specific session
+Ctrl+B  $                      # rename current session
+Ctrl+B  (  /  )               # switch to previous/next session
+tmux kill-session -t name      # kill a session
+```
+
+When you open a **second Moshi connection**, you can attach it to a different session — giving you two independent views into your Mac at the same time.
+
+### Panes (two things visible at once)
+
+Split a window into panes to see OpenCode output and a shell side by side:
+
+```bash
+Ctrl+B  %        # split vertically (left/right)
+Ctrl+B  "        # split horizontally (top/bottom)
+Ctrl+B  O        # cycle between panes
+Ctrl+B  X        # kill current pane
+```
+
+With mouse mode on (set in your `.tmux.conf`), you can **tap any pane** on the phone screen to switch to it.
+
+### When to use which
+
+| Goal | Use |
+|------|-----|
+| Multiple tasks in one project | Windows inside `main` |
+| Two completely separate projects | Two named sessions |
+| Watch output while running commands | Panes side by side |
+| Two Moshi connections simultaneously | Two sessions, one per connection |
+
+---
+
+## SSH Keys and iOS Apps
+
+The script generates `~/.ssh/id_ed25519` (private key) and adds the public key to `~/.ssh/authorized_keys` on your Mac.
+
+iOS terminal apps need the **private key** to authenticate — not the public key that the script prints at the end.
+
+**To get your private key:**
+
+```bash
+cat ~/.ssh/id_ed25519
+```
+
+Copy the entire output including `-----BEGIN OPENSSH PRIVATE KEY-----` and `-----END OPENSSH PRIVATE KEY-----`. Paste it into your terminal app's key import (Settings → Keys → Import). Leave the passphrase blank — the script generated the key with no passphrase.
+
+**Better long-term approach (key never leaves your phone):**
+
+1. In Moshi/Blink: Settings → Keys → **Generate New Key** (ED25519)
+2. Copy the public key the app shows you
+3. On your Mac: `echo "<paste-public-key>" >> ~/.ssh/authorized_keys`
+4. Delete the imported key from the app
+
+This way the private key is generated on-device, lives in the iOS Keychain, and is protected by Face ID. It never travels anywhere.
+
+---
+
 ## Useful Commands
 
 ```bash
 # Detach from tmux (leave everything running in background)
 Ctrl+B  D
 
-# New tmux window
-Ctrl+B  C
-
-# Switch between windows
-Ctrl+B  1 / 2 / 3
-
 # Scroll mode — use your finger to scroll when mouse is on
 Ctrl+B  [      (press q to exit)
-
-# List all tmux sessions
-tmux ls
 
 # Manually save tmux layout (tmux-resurrect)
 Ctrl+B  Ctrl+S
